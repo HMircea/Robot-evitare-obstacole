@@ -3,14 +3,18 @@
 #define IN2 8
 #define IN3 9   // motor dreapta
 #define IN4 10
+#define BUZZER 6
 
 // Pini senzor HC-SR04
 #define TRIG 11
 #define ECHO 12
 
-#define DIST_OBSTACOL 20   
+#define DIST_OBSTACOL 20
 
 void setup() {
+  Serial.begin(9600);
+  pinMode(BUZZER, OUTPUT);
+  digitalWrite(BUZZER, LOW);
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
@@ -54,12 +58,12 @@ long masoaraDistanta() {
   delayMicroseconds(10);
   digitalWrite(TRIG, LOW);
 
-  long durata = pulseIn(ECHO, HIGH, 30000);  // timeout 30 ms (~5 m)
-  if (durata == 0) return 400;               // nimic detectat = liber
+  long durata = pulseIn(ECHO, HIGH, 30000);  // timeout 30 ms
+  if (durata == 0) return 400;               // fără ecou = liber
   return durata * 0.034 / 2;                 // cm
 }
 
-// Medie din 3 citiri, ca să scăpăm de valori aiurea
+// Medie din 3 citiri
 long distantaFiltrata() {
   long suma = 0;
   for (int i = 0; i < 3; i++) {
@@ -72,7 +76,14 @@ long distantaFiltrata() {
 // ---------- Evitare obstacol ----------
 void eviteObstacol() {
   opreste();
-  delay(200);
+
+  // buzzer pulsat: 3 bipuri
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(BUZZER, HIGH);
+    delay(150);
+    digitalWrite(BUZZER, LOW);
+    delay(100);
+  }
 
   inapoi();
   delay(400);
@@ -90,6 +101,7 @@ void eviteObstacol() {
 // ---------- Program principal ----------
 void loop() {
   long d = distantaFiltrata();
+  Serial.println(d);   // DEBUG: șterge după ce merge
 
   if (d < DIST_OBSTACOL) {
     eviteObstacol();
